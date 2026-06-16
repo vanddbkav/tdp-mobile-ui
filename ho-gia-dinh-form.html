@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d47a1" />
+  <title>Thông tin hộ gia đình</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="page-form">
+  <div class="app">
+    <header class="app-header">
+      <a href="ho-gia-dinh.html" class="icon-btn" title="Quay lại"><i class="fa-solid fa-chevron-left"></i></a>
+      <div style="flex:1">
+        <div class="title" id="hdrTitle">Thêm hộ gia đình</div>
+        <div class="sub" id="hdrSub">Nhập thông tin hộ và nhân khẩu</div>
+      </div>
+    </header>
+
+    <main class="content">
+      <form id="hoForm" autocomplete="off">
+        <!-- Thông tin hộ -->
+        <div class="card-form">
+          <div class="form-section-title"><i class="fa-solid fa-house-chimney"></i> Thông tin hộ</div>
+
+          <div class="form-group">
+            <label>Tổ dân phố <span class="req">*</span></label>
+            <select class="form-control" id="departmentId" required></select>
+          </div>
+
+          <div class="form-group">
+            <label>Họ tên chủ hộ <span class="req">*</span></label>
+            <input type="text" class="form-control" id="owner" placeholder="VD: Trần Minh Tâm" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Loại hộ</label>
+              <select class="form-control" id="familyTypeId"></select>
+            </div>
+            <div class="form-group">
+              <label>Số điện thoại</label>
+              <input type="tel" class="form-control" id="phone" placeholder="09xx xxx xxx" />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0">
+            <label>Địa chỉ hộ gia đình <span class="req">*</span></label>
+            <input type="text" class="form-control" id="address" placeholder="Số nhà, đường/thôn" required />
+          </div>
+        </div>
+
+        <!-- Đối tượng hộ gia đình -->
+        <div class="card-form">
+          <div class="form-section-title"><i class="fa-solid fa-award"></i> Đối tượng hộ gia đình</div>
+          <div class="hint" style="margin:-6px 0 10px;">Chọn các diện áp dụng cho hộ (có thể chọn nhiều)</div>
+          <div class="check-grid" id="policyGrid"></div>
+        </div>
+
+        <!-- Nhân khẩu -->
+        <div class="card-form">
+          <div class="form-section-title" style="justify-content:space-between;">
+            <span><i class="fa-solid fa-users"></i> Nhân khẩu (<span id="mCount">0</span>)</span>
+          </div>
+          <div id="memberList"></div>
+          <button type="button" class="btn-add-inline" id="btnAddMember"><i class="fa-solid fa-user-plus"></i> Thêm nhân khẩu</button>
+        </div>
+      </form>
+    </main>
+
+    <div class="form-actions">
+      <a href="ho-gia-dinh.html" class="btn btn-light">Hủy</a>
+      <button type="button" class="btn btn-primary" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> Lưu hộ</button>
+    </div>
+  </div>
+
+  <!-- Sheet thêm/sửa nhân khẩu -->
+  <div id="memberSheet" class="sheet" style="display:none;">
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="sheetTitle">Thêm nhân khẩu</div>
+
+      <div class="form-group">
+        <label>Họ và tên <span class="req">*</span></label>
+        <input type="text" class="form-control" id="mTen" placeholder="Họ tên đầy đủ" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quan hệ với chủ hộ</label>
+          <select class="form-control" id="mQuanHe"></select>
+        </div>
+        <div class="form-group">
+          <label>Giới tính</label>
+          <select class="form-control" id="mGioiTinh"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ngày sinh</label>
+          <input type="date" class="form-control" id="mNgaySinh" />
+        </div>
+        <div class="form-group">
+          <label>Dân tộc</label>
+          <select class="form-control" id="mDanToc"></select>
+        </div>
+      </div>
+
+      <div class="sub-divider">Giấy tờ tùy thân</div>
+      <div class="form-group">
+        <label>Số CCCD/CMND</label>
+        <input type="text" class="form-control" id="mCccd" inputmode="numeric" placeholder="12 chữ số" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ngày cấp</label>
+          <input type="date" class="form-control" id="mNgayCap" />
+        </div>
+        <div class="form-group">
+          <label>Nơi cấp</label>
+          <input type="text" class="form-control" id="mNoiCap" placeholder="VD: Cục CS QLHC" />
+        </div>
+      </div>
+
+      <div class="sub-divider">Học vấn &amp; nghề nghiệp</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Học vấn</label>
+          <select class="form-control" id="mHocVan"></select>
+        </div>
+        <div class="form-group">
+          <label>Chuyên môn</label>
+          <select class="form-control" id="mChuyenMon"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nghề nghiệp</label>
+          <select class="form-control" id="mNghe"></select>
+        </div>
+        <div class="form-group">
+          <label>Tôn giáo</label>
+          <select class="form-control" id="mTonGiao"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nhóm máu</label>
+        <select class="form-control" id="mNhomMau"></select>
+      </div>
+
+      <div class="sub-divider">Khác</div>
+      <label class="check-row">
+        <input type="checkbox" id="mDangVien" /> <span>Là Đảng viên</span>
+      </label>
+      <div class="form-group" style="margin-top:8px;">
+        <label>Đối tượng chính sách cá nhân</label>
+        <div class="check-grid" id="mPolicyGrid"></div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button type="button" class="btn btn-light" style="flex:1" id="sheetCancel">Hủy</button>
+        <button type="button" class="btn btn-primary" style="flex:1" id="sheetSave">Lưu nhân khẩu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    let members = [];
+    let editingIndex = -1;
+    let policySelected = new Set();
+    let mPolicySelected = new Set();
+
+    // Đổ select danh mục thông tin hộ
+    fillSelect(document.getElementById("departmentId"), "toDanPho", TDP_INFO.departmentId);
+    fillSelect(document.getElementById("familyTypeId"), "loaiHo", 1);
+
+    // Lưới đối tượng hộ
+    function renderPolicyGrid() {
+      document.getElementById("policyGrid").innerHTML = DM.doiTuongHo.map((x) => `
+        <label class="check-chip ${policySelected.has(x.id) ? "on" : ""}" data-id="${x.id}">
+          <i class="fa-solid ${policySelected.has(x.id) ? "fa-circle-check" : "fa-circle"}"></i> ${x.ten}
+        </label>`).join("");
+    }
+    document.getElementById("policyGrid").addEventListener("click", (e) => {
+      const c = e.target.closest(".check-chip"); if (!c) return;
+      const id = Number(c.dataset.id);
+      policySelected.has(id) ? policySelected.delete(id) : policySelected.add(id);
+      renderPolicyGrid();
+    });
+
+    // Nạp dữ liệu nếu sửa
+    const id = layThamSo("id");
+    if (id) {
+      const ho = timHo(id);
+      if (ho) {
+        document.getElementById("hdrTitle").textContent = "Sửa hộ gia đình";
+        document.getElementById("hdrSub").textContent = ho.Owner;
+        document.getElementById("owner").value = ho.Owner;
+        document.getElementById("phone").value = ho.Phone || "";
+        document.getElementById("address").value = ho.Address || "";
+        fillSelect(document.getElementById("departmentId"), "toDanPho", ho.DepartmentId);
+        fillSelect(document.getElementById("familyTypeId"), "loaiHo", ho.FamilyTypeId);
+        policySelected = new Set(ho.policyTypeIds || []);
+        members = JSON.parse(JSON.stringify(ho.members || []));
+      }
+    }
+    renderPolicyGrid();
+
+    function renderMembers() {
+      document.getElementById("mCount").textContent = members.length;
+      const box = document.getElementById("memberList");
+      if (!members.length) {
+        box.innerHTML = '<div class="hint" style="margin-bottom:10px;">Chưa có nhân khẩu. Bấm nút bên dưới để thêm.</div>';
+        return;
+      }
+      box.innerHTML = members.map((m, i) => {
+        const t = tuoi(m.DateOfBirth);
+        return `
+        <div class="member-item" data-i="${i}">
+          <div class="mi-head">
+            <div class="mi-name">${m.FullName} <span class="badge gray">${tenDM("quanHe", m.RelationshipId)}</span></div>
+            <button type="button" class="del" data-del="${i}" title="Xóa"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <div class="mi-meta">${tenDM("gioiTinh", m.SexId)} · ${dinhDangNgay(m.DateOfBirth)}${t !== null ? " (" + t + "t)" : ""} · ${tenDM("ngheNghiep", m.JobId) || "—"}</div>
+          ${m.IdentityId ? `<div class="mi-meta"><i class="fa-solid fa-id-card"></i> ${m.IdentityId}</div>` : ""}
+        </div>`;
+      }).join("");
+    }
+
+    /* ----- Sheet ----- */
+    function fillMemberSelects() {
+      fillSelect(document.getElementById("mQuanHe"), "quanHe");
+      fillSelect(document.getElementById("mGioiTinh"), "gioiTinh");
+      fillSelect(document.getElementById("mDanToc"), "danToc");
+      fillSelect(document.getElementById("mHocVan"), "hocVan", "", "—");
+      fillSelect(document.getElementById("mChuyenMon"), "chuyenMon", "", "—");
+      fillSelect(document.getElementById("mNghe"), "ngheNghiep", "", "—");
+      fillSelect(document.getElementById("mTonGiao"), "tonGiao");
+      fillSelect(document.getElementById("mNhomMau"), "nhomMau", "", "—");
+    }
+    function renderMPolicy() {
+      document.getElementById("mPolicyGrid").innerHTML = DM.doiTuongCaNhan.map((x) => `
+        <label class="check-chip ${mPolicySelected.has(x.id) ? "on" : ""}" data-id="${x.id}">
+          <i class="fa-solid ${mPolicySelected.has(x.id) ? "fa-circle-check" : "fa-circle"}"></i> ${x.ten}
+        </label>`).join("");
+    }
+    document.getElementById("mPolicyGrid").addEventListener("click", (e) => {
+      const c = e.target.closest(".check-chip"); if (!c) return;
+      const id = Number(c.dataset.id);
+      mPolicySelected.has(id) ? mPolicySelected.delete(id) : mPolicySelected.add(id);
+      renderMPolicy();
+    });
+
+    function openSheet(index) {
+      editingIndex = index;
+      const m = index >= 0 ? members[index] : null;
+      fillMemberSelects();
+      mPolicySelected = new Set(m && m.personalPolicyIds ? m.personalPolicyIds : []);
+      renderMPolicy();
+      document.getElementById("sheetTitle").textContent = m ? "Sửa nhân khẩu" : "Thêm nhân khẩu";
+      document.getElementById("mTen").value = m ? m.FullName : "";
+      document.getElementById("mQuanHe").value = m ? m.RelationshipId : (members.length === 0 ? 1 : 4);
+      document.getElementById("mGioiTinh").value = m ? m.SexId : 2;
+      document.getElementById("mNgaySinh").value = m ? (m.DateOfBirth || "") : "";
+      document.getElementById("mDanToc").value = m ? (m.RaceId || 1) : 1;
+      document.getElementById("mCccd").value = m ? (m.IdentityId || "") : "";
+      document.getElementById("mNgayCap").value = m ? (m.IdentityDate || "") : "";
+      document.getElementById("mNoiCap").value = m ? (m.IndetityLocation || "") : "";
+      document.getElementById("mHocVan").value = m ? (m.EducationId || "") : "";
+      document.getElementById("mChuyenMon").value = m ? (m.SpecialisationId || "") : "";
+      document.getElementById("mNghe").value = m ? (m.JobId || "") : "";
+      document.getElementById("mTonGiao").value = m ? (m.ReligionId || 1) : 1;
+      document.getElementById("mNhomMau").value = m ? (m.BloodTypeId || "") : "";
+      document.getElementById("mDangVien").checked = m ? !!m.isCommunist : false;
+      document.getElementById("memberSheet").style.display = "block";
+      document.querySelector(".sheet-panel").scrollTop = 0;
+    }
+    function closeSheet() { document.getElementById("memberSheet").style.display = "none"; }
+
+    document.getElementById("btnAddMember").addEventListener("click", () => openSheet(-1));
+    document.getElementById("sheetCancel").addEventListener("click", closeSheet);
+    document.getElementById("sheetBackdrop").addEventListener("click", closeSheet);
+
+    document.getElementById("memberList").addEventListener("click", (e) => {
+      const del = e.target.closest("[data-del]");
+      if (del) {
+        e.stopPropagation();
+        if (confirm("Xóa nhân khẩu này?")) { members.splice(Number(del.dataset.del), 1); renderMembers(); }
+        return;
+      }
+      const item = e.target.closest(".member-item");
+      if (item) openSheet(Number(item.dataset.i));
+    });
+
+    document.getElementById("sheetSave").addEventListener("click", () => {
+      const ten = document.getElementById("mTen").value.trim();
+      if (!ten) { alert("Vui lòng nhập họ tên nhân khẩu."); return; }
+      const m = {
+        FullName: ten,
+        RelationshipId: Number(document.getElementById("mQuanHe").value),
+        SexId: Number(document.getElementById("mGioiTinh").value),
+        DateOfBirth: document.getElementById("mNgaySinh").value,
+        RaceId: Number(document.getElementById("mDanToc").value),
+        IdentityId: document.getElementById("mCccd").value.trim(),
+        IdentityDate: document.getElementById("mNgayCap").value,
+        IndetityLocation: document.getElementById("mNoiCap").value.trim(),
+        EducationId: Number(document.getElementById("mHocVan").value) || null,
+        SpecialisationId: Number(document.getElementById("mChuyenMon").value) || null,
+        JobId: Number(document.getElementById("mNghe").value) || null,
+        ReligionId: Number(document.getElementById("mTonGiao").value),
+        BloodTypeId: Number(document.getElementById("mNhomMau").value) || null,
+        isCommunist: document.getElementById("mDangVien").checked,
+        personalPolicyIds: [...mPolicySelected],
+      };
+      if (editingIndex >= 0) members[editingIndex] = m; else members.push(m);
+      closeSheet();
+      renderMembers();
+    });
+
+    document.getElementById("btnSave").addEventListener("click", () => {
+      const owner = document.getElementById("owner").value.trim();
+      const address = document.getElementById("address").value.trim();
+      if (!owner || !address) { alert("Vui lòng nhập Họ tên chủ hộ và Địa chỉ."); return; }
+      alert("✅ Đã lưu hộ \"" + owner + "\"\n• Tổ: " + document.getElementById("departmentId").selectedOptions[0].text +
+            "\n• Nhân khẩu: " + members.length +
+            "\n• Đối tượng hộ: " + ([...policySelected].map((i) => tenDM("doiTuongHo", i)).join(", ") || "—") +
+            "\n\n(Bản mẫu — sẽ ghi vào DB tdp_dn: family, family_member/user, family_policy_object khi nối backend.)");
+      location.href = "ho-gia-dinh.html";
+    });
+
+    renderMembers();
+  </script>
+</body>
+</html>

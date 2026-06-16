@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d47a1" />
+  <title>Quản lý Tổ dân phố</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div style="flex:1">
+        <div class="title" id="hdrTitle">Tổ dân phố</div>
+        <div class="sub" id="hdrSub">Hệ thống quản lý</div>
+      </div>
+      <a href="#" class="icon-btn" title="Thông báo"><i class="fa-regular fa-bell"></i></a>
+    </header>
+
+    <main class="content">
+      <div class="card hero">
+        <div class="hero-sub">Xin chào, Tổ trưởng</div>
+        <div class="hero-name" id="greetName">—</div>
+        <div class="hero-addr"><i class="fa-solid fa-location-dot"></i> <span id="greetAddr">—</span></div>
+      </div>
+
+      <div class="section-title">Tổng quan</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="ico blue"><i class="fa-solid fa-house-chimney"></i></div>
+          <div class="num" id="stHo">0</div>
+          <div class="lbl">Hộ gia đình</div>
+        </div>
+        <div class="stat-card">
+          <div class="ico teal"><i class="fa-solid fa-users"></i></div>
+          <div class="num" id="stKhau">0</div>
+          <div class="lbl">Nhân khẩu</div>
+        </div>
+        <div class="stat-card">
+          <div class="ico green"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="num" id="stDaThu">0</div>
+          <div class="lbl">Lượt đã thu quỹ</div>
+        </div>
+        <div class="stat-card">
+          <div class="ico orange"><i class="fa-solid fa-clock"></i></div>
+          <div class="num" id="stChuaThu">0</div>
+          <div class="lbl">Lượt chưa thu</div>
+        </div>
+      </div>
+
+      <div class="section-title">
+        Đối tượng cần quản lý
+        <span style="float:right; font-weight:500; text-transform:none; letter-spacing:0; color:var(--text-soft);">Tự động theo ngày sinh</span>
+      </div>
+      <div class="card" id="doiTuongCard"></div>
+
+      <div class="section-title">Tiến độ thu quỹ</div>
+      <div class="card progress-card">
+        <div class="row">
+          <span style="color:var(--text-soft); font-size:13px;">Đã thu / Dự kiến</span>
+          <span class="amount" id="pgAmount">0 đ</span>
+        </div>
+        <div class="progress-bar"><span id="pgBar" style="width:0%"></span></div>
+        <div class="progress-meta">
+          <span id="pgPct">0%</span>
+          <span id="pgTotal">Dự kiến: 0 đ</span>
+        </div>
+      </div>
+
+      <div class="section-title">Truy cập nhanh</div>
+      <div class="card">
+        <a href="ho-gia-dinh-form.html" class="list-item">
+          <div class="avatar blue"><i class="fa-solid fa-house-circle-check"></i></div>
+          <div class="li-body">
+            <div class="li-title">Thêm hộ gia đình</div>
+            <div class="li-sub">Nhập thông tin hộ và nhân khẩu mới</div>
+          </div>
+          <i class="fa-solid fa-chevron-right chev"></i>
+        </a>
+        <a href="thu-quy-form.html" class="list-item">
+          <div class="avatar green"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+          <div class="li-body">
+            <div class="li-title">Ghi nhận thu quỹ</div>
+            <div class="li-sub">Nhập khoản thu của hộ gia đình</div>
+          </div>
+          <i class="fa-solid fa-chevron-right chev"></i>
+        </a>
+        <a href="ho-gia-dinh.html" class="list-item">
+          <div class="avatar teal"><i class="fa-solid fa-list-ul"></i></div>
+          <div class="li-body">
+            <div class="li-title">Danh sách hộ gia đình</div>
+            <div class="li-sub">Tra cứu, chỉnh sửa thông tin hộ</div>
+          </div>
+          <i class="fa-solid fa-chevron-right chev"></i>
+        </a>
+        <a href="thu-quy.html" class="list-item">
+          <div class="avatar orange"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div class="li-body">
+            <div class="li-title">Quản lý quỹ &amp; thu quỹ</div>
+            <div class="li-sub">Theo dõi các quỹ và tình hình thu</div>
+          </div>
+          <i class="fa-solid fa-chevron-right chev"></i>
+        </a>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <a href="index.html" class="active"><i class="fa-solid fa-house ic"></i>Trang chủ</a>
+      <a href="ho-gia-dinh.html"><i class="fa-solid fa-people-roof ic"></i>Hộ GĐ</a>
+      <a href="thu-quy.html"><i class="fa-solid fa-sack-dollar ic"></i>Thu quỹ</a>
+      <a href="#"><i class="fa-solid fa-chart-column ic"></i>Báo cáo</a>
+    </nav>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    document.getElementById("hdrTitle").textContent = TDP_INFO.ten;
+    document.getElementById("hdrSub").textContent = TDP_INFO.phuong;
+    document.getElementById("greetName").textContent = TDP_INFO.toTruong;
+    document.getElementById("greetAddr").textContent = TDP_INFO.ten + " · " + TDP_INFO.phuong;
+
+    const soKhau = FAMILY.reduce((s, h) => s + h.members.length, 0);
+    document.getElementById("stHo").textContent = FAMILY.length;
+    document.getElementById("stKhau").textContent = soKhau;
+
+    // Đối tượng cần quản lý (tính theo ngày sinh + giới tính)
+    document.getElementById("doiTuongCard").innerHTML = thongKeDoiTuong().map((n) => `
+      <div class="stat-row">
+        <div class="ico ${n.color}"><i class="fa-solid ${n.icon}"></i></div>
+        <div class="sr-body">
+          <div class="sr-title">${n.label}</div>
+          <div class="sr-desc">${n.desc}</div>
+        </div>
+        <div class="sr-num ${n.count ? "" : "zero"}">${n.count}</div>
+      </div>`).join("");
+
+    const daThu = COLLECT.filter((c) => c.IsCollected).length;
+    document.getElementById("stDaThu").textContent = daThu;
+    document.getElementById("stChuaThu").textContent = COLLECT.length - daThu;
+
+    const tongDuKien = COLLECT.reduce((s, c) => s + (c.SubmittedAmount || 0), 0);
+    const tongDaThu = COLLECT.filter((c) => c.IsCollected).reduce((s, c) => s + (c.SubmittedAmount || 0), 0);
+    const pct = tongDuKien ? Math.round((tongDaThu / tongDuKien) * 100) : 0;
+    document.getElementById("pgAmount").textContent = dinhDangTien(tongDaThu);
+    document.getElementById("pgBar").style.width = pct + "%";
+    document.getElementById("pgPct").textContent = pct + "% hoàn thành";
+    document.getElementById("pgTotal").textContent = "Dự kiến: " + dinhDangTien(tongDuKien);
+  </script>
+</body>
+</html>

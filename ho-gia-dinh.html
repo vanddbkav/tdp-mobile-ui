@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d47a1" />
+  <title>Hộ gia đình</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div style="flex:1">
+        <div class="title">Hộ gia đình</div>
+        <div class="sub" id="hdrCount">0 hộ</div>
+      </div>
+      <a href="ho-gia-dinh-form.html" class="icon-btn" title="Thêm hộ"><i class="fa-solid fa-plus"></i></a>
+    </header>
+
+    <main class="content">
+      <div class="search-bar">
+        <div class="search-input">
+          <i class="fa-solid fa-magnifying-glass" style="color:var(--text-soft)"></i>
+          <input type="text" id="searchInput" placeholder="Tìm theo tên chủ hộ, địa chỉ, SĐT..." />
+        </div>
+      </div>
+
+      <div class="chip-row" id="chipRow">
+        <div class="chip active" data-filter="all">Tất cả</div>
+        <div class="chip" data-filter="1">Dân bản địa</div>
+        <div class="chip" data-filter="2">Nhập cư</div>
+      </div>
+
+      <div class="card" id="listCard"></div>
+    </main>
+
+    <a href="ho-gia-dinh-form.html" class="fab" title="Thêm hộ"><i class="fa-solid fa-plus"></i></a>
+
+    <nav class="bottom-nav">
+      <a href="index.html"><i class="fa-solid fa-house ic"></i>Trang chủ</a>
+      <a href="ho-gia-dinh.html" class="active"><i class="fa-solid fa-people-roof ic"></i>Hộ GĐ</a>
+      <a href="thu-quy.html"><i class="fa-solid fa-sack-dollar ic"></i>Thu quỹ</a>
+      <a href="#"><i class="fa-solid fa-chart-column ic"></i>Báo cáo</a>
+    </nav>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    let curFilter = "all";
+    let curSearch = "";
+
+    function render() {
+      const list = FAMILY.filter((h) => {
+        const okFilter = curFilter === "all" || h.FamilyTypeId === Number(curFilter);
+        const q = curSearch.toLowerCase().trim();
+        const okSearch = !q ||
+          h.Owner.toLowerCase().includes(q) ||
+          (h.Address || "").toLowerCase().includes(q) ||
+          (h.Phone || "").includes(q);
+        return okFilter && okSearch;
+      });
+
+      const tongKhau = FAMILY.reduce((s, h) => s + h.members.length, 0);
+      document.getElementById("hdrCount").textContent = FAMILY.length + " hộ · " + tongKhau + " nhân khẩu";
+
+      const card = document.getElementById("listCard");
+      if (!list.length) {
+        card.innerHTML = '<div class="empty"><div class="big"><i class="fa-solid fa-magnifying-glass"></i></div>Không tìm thấy hộ gia đình nào</div>';
+        return;
+      }
+      card.innerHTML = list.map((h) => {
+        const loai = h.FamilyTypeId === 2
+          ? '<span class="badge orange">Nhập cư</span>'
+          : '<span class="badge blue">Dân bản địa</span>';
+        const dt = (h.policyTypeIds || []).filter((id) => id !== 6)
+          .map((id) => `<span class="badge green">${tenDM("doiTuongHo", id)}</span>`).join(" ");
+        return `
+          <a href="ho-gia-dinh-form.html?id=${h.Id}" class="list-item">
+            <div class="avatar">${vietTat(h.Owner)}</div>
+            <div class="li-body">
+              <div class="li-title">${h.Owner} ${loai}</div>
+              <div class="li-sub"><i class="fa-solid fa-location-dot"></i> ${h.Address || "—"}</div>
+              <div class="li-sub"><i class="fa-solid fa-users"></i> ${h.members.length} nhân khẩu · <i class="fa-solid fa-phone"></i> ${h.Phone || "—"}</div>
+              ${dt ? `<div style="margin-top:4px;">${dt}</div>` : ""}
+            </div>
+            <i class="fa-solid fa-chevron-right chev"></i>
+          </a>`;
+      }).join("");
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => { curSearch = e.target.value; render(); });
+    document.getElementById("chipRow").addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      document.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      curFilter = chip.dataset.filter;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

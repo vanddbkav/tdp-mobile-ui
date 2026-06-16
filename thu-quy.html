@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d47a1" />
+  <title>Thu quỹ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div style="flex:1">
+        <div class="title">Quản lý thu quỹ</div>
+        <div class="sub" id="hdrSub">Theo dõi thu quỹ theo hộ</div>
+      </div>
+      <a href="thu-quy-form.html" class="icon-btn" title="Ghi nhận thu"><i class="fa-solid fa-plus"></i></a>
+    </header>
+
+    <main class="content">
+      <div class="form-group">
+        <label style="font-weight:600; color:var(--text-soft); font-size:13px;">Chọn quỹ</label>
+        <select class="form-control" id="fundSelect"></select>
+      </div>
+
+      <div class="card progress-card" style="margin:12px 0 14px;">
+        <div class="row">
+          <span style="color:var(--text-soft); font-size:13px;" id="fundDeadline">Hạn thu: —</span>
+          <span class="amount" id="pgAmount">0 đ</span>
+        </div>
+        <div class="progress-bar"><span id="pgBar" style="width:0%"></span></div>
+        <div class="progress-meta">
+          <span id="pgPct">0%</span>
+          <span id="pgTotal">Định mức: 0 đ/hộ</span>
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <div class="cell"><div class="v" id="smTong">0</div><div class="k">Lượt thu</div></div>
+        <div class="cell"><div class="v green" id="smDaThu">0</div><div class="k">Đã thu</div></div>
+        <div class="cell"><div class="v orange" id="smChuaThu">0</div><div class="k">Chưa thu</div></div>
+      </div>
+
+      <div class="search-bar">
+        <div class="search-input">
+          <i class="fa-solid fa-magnifying-glass" style="color:var(--text-soft)"></i>
+          <input type="text" id="searchInput" placeholder="Tìm theo tên chủ hộ..." />
+        </div>
+      </div>
+
+      <div class="chip-row" id="chipRow">
+        <div class="chip active" data-filter="all">Tất cả</div>
+        <div class="chip" data-filter="0">Chưa thu</div>
+        <div class="chip" data-filter="1">Đã thu</div>
+      </div>
+
+      <div class="card" id="listCard"></div>
+    </main>
+
+    <a href="thu-quy-form.html" class="fab" title="Ghi nhận thu"><i class="fa-solid fa-plus"></i></a>
+
+    <nav class="bottom-nav">
+      <a href="index.html"><i class="fa-solid fa-house ic"></i>Trang chủ</a>
+      <a href="ho-gia-dinh.html"><i class="fa-solid fa-people-roof ic"></i>Hộ GĐ</a>
+      <a href="thu-quy.html" class="active"><i class="fa-solid fa-sack-dollar ic"></i>Thu quỹ</a>
+      <a href="#"><i class="fa-solid fa-chart-column ic"></i>Báo cáo</a>
+    </nav>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    let curFund = "all";
+    let curFilter = "all";
+    let curSearch = "";
+
+    // Đổ danh sách quỹ
+    const sel = document.getElementById("fundSelect");
+    sel.innerHTML = '<option value="all">— Tất cả các quỹ —</option>' +
+      FUND.map((f) => `<option value="${f.Id}">${f.FundName}${f.IsActive ? "" : " (đã đóng)"}</option>`).join("");
+
+    function dataset() {
+      return COLLECT.filter((c) => curFund === "all" || c.FundId === Number(curFund));
+    }
+
+    function renderSummary() {
+      const ds = dataset();
+      const daThu = ds.filter((c) => c.IsCollected);
+      document.getElementById("smTong").textContent = ds.length;
+      document.getElementById("smDaThu").textContent = daThu.length;
+      document.getElementById("smChuaThu").textContent = ds.length - daThu.length;
+
+      const tongDuKien = ds.reduce((s, c) => s + (c.SubmittedAmount || 0), 0);
+      const tongDaThu = daThu.reduce((s, c) => s + (c.SubmittedAmount || 0), 0);
+      const pct = tongDuKien ? Math.round((tongDaThu / tongDuKien) * 100) : 0;
+      document.getElementById("pgAmount").textContent = dinhDangTien(tongDaThu);
+      document.getElementById("pgBar").style.width = pct + "%";
+      document.getElementById("pgPct").textContent = pct + "% đã thu";
+
+      if (curFund === "all") {
+        document.getElementById("fundDeadline").textContent = "Tổng các quỹ";
+        document.getElementById("pgTotal").textContent = "Dự kiến: " + dinhDangTien(tongDuKien);
+      } else {
+        const f = FUND.find((x) => x.Id === Number(curFund));
+        document.getElementById("fundDeadline").textContent = "Hạn thu: " + dinhDangNgay(f.Deadline);
+        document.getElementById("pgTotal").textContent = "Định mức: " + dinhDangTien(f.TotalAmount) + "/hộ";
+      }
+    }
+
+    function render() {
+      const list = dataset().filter((c) => {
+        const okFilter = curFilter === "all" || (c.IsCollected ? 1 : 0) === Number(curFilter);
+        const q = curSearch.toLowerCase().trim();
+        const okSearch = !q || tenHo(c.FamilyId).toLowerCase().includes(q);
+        return okFilter && okSearch;
+      });
+
+      const card = document.getElementById("listCard");
+      if (!list.length) {
+        card.innerHTML = '<div class="empty"><div class="big"><i class="fa-solid fa-sack-dollar"></i></div>Không có khoản thu phù hợp</div>';
+        return;
+      }
+      card.innerHTML = list.map((c) => {
+        const da = !!c.IsCollected;
+        const badge = da
+          ? '<span class="badge green"><i class="fa-solid fa-check"></i> Đã thu</span>'
+          : '<span class="badge orange"><i class="fa-solid fa-clock"></i> Chưa thu</span>';
+        return `
+          <a href="thu-quy-form.html?id=${c.Id}" class="fund-item" style="text-decoration:none;color:inherit;">
+            <div class="avatar ${da ? "green" : "orange"}">${vietTat(tenHo(c.FamilyId))}</div>
+            <div class="fi-body">
+              <div class="fi-title">${tenHo(c.FamilyId)}</div>
+              <div class="fi-sub">${tenQuy(c.FundId)}</div>
+              <div class="fi-sub">${da ? "<i class='fa-solid fa-calendar-check'></i> Nộp " + dinhDangNgay(c.CollectedDate) : (c.Description || "Chưa nộp")}</div>
+            </div>
+            <div class="fi-right">
+              <div class="fi-amount">${dinhDangTien(c.SubmittedAmount)}</div>
+              <div style="margin-top:4px;">${badge}</div>
+            </div>
+          </a>`;
+      }).join("");
+    }
+
+    function refresh() { renderSummary(); render(); }
+
+    sel.addEventListener("change", (e) => { curFund = e.target.value; refresh(); });
+    document.getElementById("searchInput").addEventListener("input", (e) => { curSearch = e.target.value; render(); });
+    document.getElementById("chipRow").addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip"); if (!chip) return;
+      document.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      curFilter = chip.dataset.filter;
+      render();
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

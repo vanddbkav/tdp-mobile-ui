@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d47a1" />
+  <title>Ghi nhận thu quỹ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="page-form">
+  <div class="app">
+    <header class="app-header">
+      <a href="thu-quy.html" class="icon-btn" title="Quay lại"><i class="fa-solid fa-chevron-left"></i></a>
+      <div style="flex:1">
+        <div class="title" id="hdrTitle">Ghi nhận thu quỹ</div>
+        <div class="sub">Nhập khoản thu của hộ gia đình</div>
+      </div>
+    </header>
+
+    <main class="content">
+      <form id="quyForm" autocomplete="off">
+        <div class="card-form">
+          <div class="form-section-title"><i class="fa-solid fa-sack-dollar"></i> Thông tin khoản thu</div>
+
+          <div class="form-group">
+            <label>Quỹ <span class="req">*</span></label>
+            <select class="form-control" id="fundId" required></select>
+          </div>
+
+          <div class="form-group">
+            <label>Hộ gia đình <span class="req">*</span></label>
+            <select class="form-control" id="familyId" required></select>
+          </div>
+
+          <div class="form-group">
+            <label>Số tiền nộp (đ) <span class="req">*</span></label>
+            <input type="text" class="form-control" id="soTien" inputmode="numeric" placeholder="VD: 100.000" />
+            <div class="hint" id="dinhMucHint"></div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0">
+            <label>Mức gợi ý</label>
+            <div class="chip-row" id="quickAmount" style="margin-bottom:0;">
+              <div class="chip" data-v="50000">50.000</div>
+              <div class="chip" data-v="100000">100.000</div>
+              <div class="chip" data-v="200000">200.000</div>
+              <div class="chip" data-v="300000">300.000</div>
+              <div class="chip" data-v="500000">500.000</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-form">
+          <div class="form-section-title"><i class="fa-solid fa-receipt"></i> Xác nhận thu</div>
+
+          <label class="check-row" style="margin-bottom:14px;">
+            <input type="checkbox" id="isCollected" checked /> <span>Đã thu tiền</span>
+          </label>
+
+          <div class="form-group" id="ngayThuGroup">
+            <label>Ngày thu</label>
+            <input type="date" class="form-control" id="ngayThu" value="2026-06-16" />
+          </div>
+
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea class="form-control" id="ghiChu" placeholder="VD: Đã thu hộ ông..., thu thay..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0">
+            <label>Ảnh minh chứng (biên lai/chuyển khoản)</label>
+            <label class="upload-box" for="anhFile">
+              <i class="fa-solid fa-camera"></i>
+              <span id="uploadText">Chụp ảnh hoặc chọn từ thư viện</span>
+            </label>
+            <input type="file" id="anhFile" accept="image/*" capture="environment" hidden />
+          </div>
+        </div>
+      </form>
+    </main>
+
+    <div class="form-actions">
+      <a href="thu-quy.html" class="btn btn-light">Hủy</a>
+      <button type="button" class="btn btn-primary" id="btnSave"><i class="fa-solid fa-floppy-disk"></i> Lưu khoản thu</button>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    const selFund = document.getElementById("fundId");
+    selFund.innerHTML = '<option value="">— Chọn quỹ —</option>' +
+      FUND.filter((f) => f.IsActive).map((f) => `<option value="${f.Id}">${f.FundName}</option>`).join("");
+
+    const selFam = document.getElementById("familyId");
+    selFam.innerHTML = '<option value="">— Chọn hộ gia đình —</option>' +
+      FAMILY.map((f) => `<option value="${f.Id}">${f.Owner} — ${f.Address}</option>`).join("");
+
+    const inpTien = document.getElementById("soTien");
+    inpTien.addEventListener("input", () => {
+      const num = inpTien.value.replace(/\D/g, "");
+      inpTien.value = num ? Number(num).toLocaleString("vi-VN") : "";
+    });
+
+    // Gợi ý định mức theo quỹ
+    selFund.addEventListener("change", () => {
+      const f = FUND.find((x) => x.Id === Number(selFund.value));
+      document.getElementById("dinhMucHint").textContent =
+        f ? "Định mức quỹ: " + dinhDangTien(f.TotalAmount) + "/hộ · Hạn: " + dinhDangNgay(f.Deadline) : "";
+    });
+
+    document.getElementById("quickAmount").addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip"); if (!chip) return;
+      document.querySelectorAll("#quickAmount .chip").forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      inpTien.value = Number(chip.dataset.v).toLocaleString("vi-VN");
+    });
+
+    document.getElementById("isCollected").addEventListener("change", (e) => {
+      document.getElementById("ngayThuGroup").style.display = e.target.checked ? "block" : "none";
+    });
+
+    document.getElementById("anhFile").addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      document.getElementById("uploadText").textContent = f ? f.name : "Chụp ảnh hoặc chọn từ thư viện";
+    });
+
+    // Chế độ sửa
+    const id = layThamSo("id");
+    if (id) {
+      const c = COLLECT.find((x) => x.Id === Number(id));
+      if (c) {
+        document.getElementById("hdrTitle").textContent = "Sửa khoản thu";
+        selFund.value = c.FundId;
+        selFam.value = c.FamilyId;
+        selFund.dispatchEvent(new Event("change"));
+        inpTien.value = (c.SubmittedAmount || 0).toLocaleString("vi-VN");
+        document.getElementById("isCollected").checked = !!c.IsCollected;
+        document.getElementById("ngayThuGroup").style.display = c.IsCollected ? "block" : "none";
+        if (c.CollectedDate) document.getElementById("ngayThu").value = c.CollectedDate;
+        document.getElementById("ghiChu").value = c.Description || "";
+      }
+    }
+
+    document.getElementById("btnSave").addEventListener("click", () => {
+      const fund = selFund.value, fam = selFam.value;
+      const tien = inpTien.value.replace(/\D/g, "");
+      if (!fund) { alert("Vui lòng chọn quỹ."); return; }
+      if (!fam) { alert("Vui lòng chọn hộ gia đình."); return; }
+      if (!tien || Number(tien) <= 0) { alert("Vui lòng nhập số tiền hợp lệ."); return; }
+      const da = document.getElementById("isCollected").checked;
+      alert("✅ Đã lưu khoản thu:\n• Quỹ: " + tenQuy(fund) +
+            "\n• Hộ: " + tenHo(fam) +
+            "\n• Số tiền: " + Number(tien).toLocaleString("vi-VN") + " đ" +
+            "\n• Trạng thái: " + (da ? "Đã thu (" + dinhDangNgay(document.getElementById("ngayThu").value) + ")" : "Chưa thu") +
+            "\n\n(Bản mẫu — sẽ ghi vào bảng collect trong DB tdp_dn khi nối backend.)");
+      location.href = "thu-quy.html";
+    });
+  </script>
+</body>
+</html>
