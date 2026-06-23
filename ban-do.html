@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d47a1" />
+  <title>Bản đồ số</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/ndamap-gl@latest/dist/ndamap-gl.css" />
+  <script src="https://unpkg.com/ndamap-gl@latest/dist/ndamap-gl.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .map-wrap {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - var(--header-h) - var(--nav-h));
+      overflow: hidden;
+    }
+    #map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .map-overlay {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 10px 12px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .map-overlay .ico {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .map-overlay .ov-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .map-overlay .ov-sub {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+    .map-content {
+      padding: 0 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div style="flex:1">
+        <div class="title">Bản đồ số</div>
+        <div class="sub" id="hdrSub">Ranh giới hành chính</div>
+      </div>
+      <a href="#" class="icon-btn" id="btnFit" title="Định vị ranh giới"><i class="fa-solid fa-location-crosshairs"></i></a>
+    </header>
+
+    <main class="content map-content">
+      <div class="map-wrap">
+        <div class="map-overlay">
+          <div class="ico"><i class="fa-solid fa-draw-polygon"></i></div>
+          <div style="flex:1; min-width:0;">
+            <div class="ov-title" id="ovTitle">Đang tải dữ liệu…</div>
+            <div class="ov-sub" id="ovSub">Nguồn: ranh_PVietHung.osm</div>
+          </div>
+        </div>
+        <div id="map"></div>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <a href="index.html"><i class="fa-solid fa-house ic"></i>Trang chủ</a>
+      <a href="ho-gia-dinh.html"><i class="fa-solid fa-people-roof ic"></i>Hộ GĐ</a>
+      <a href="thu-quy.html"><i class="fa-solid fa-sack-dollar ic"></i>Thu quỹ</a>
+      <a href="ban-do.html" class="active"><i class="fa-solid fa-map-location-dot ic"></i>Bản đồ số</a>
+    </nav>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    document.getElementById("hdrSub").textContent = (typeof TDP_INFO !== "undefined" ? TDP_INFO.phuong : "Ranh giới hành chính");
+
+    const map = new ndamapgl.Map({
+      container: "map",
+      style: "https://maptiles.ndamaps.vn/styles/day-v2/style.json?apikey=HyzpQ5ZfwI02JJ0EwCmznX8fW6LwU5qa",
+      center: [105.905, 21.063],
+      zoom: 13,
+      ndamapLogo: true
+    });
+
+    let lastBounds = null;
+
+    function coordsEqual(a, b) {
+      return a[0] === b[0] && a[1] === b[1];
+    }
+
+    function stitchWays(wayIds, ways) {
+      if (!wayIds.length) return [];
+
+      function tryFrom(startId, reverseStart) {
+        const remaining = new Set(wayIds);
+        remaining.delete(startId);
+
+        let startCoords = ways[startId];
+        if (!startCoords?.length) return [];
+        if (reverseStart) startCoords = startCoords.slice().reverse();
+
+        const ring = [...startCoords];
+
+        while (remaining.size > 0) {
+          const end = ring[ring.length - 1];
+          let nextId = null;
+          let reversed = false;
+
+          for (const id of remaining) {
+            const coords = ways[id];
+            if (!coords || coords.length < 2) continue;
+
+            if (coordsEqual(coords[0], end)) {
+              nextId = id;
+              break;
+            }
+            if (coordsEqual(coords[coords.length - 1], end)) {
+              nextId = id;
+              reversed = true;
+              break;
+            }
+          }
+
+          if (!nextId) return null;
+
+          const segment = reversed
+            ? ways[nextId].slice().reverse()
+            : ways[nextId];
+          ring.push(...segment.slice(1));
+          remaining.delete(nextId);
+        }
+
+        if (ring.length >= 3 && !coordsEqual(ring[0], ring[ring.length - 1])) {
+          ring.push(ring[0]);
+        }
+
+        return ring;
+      }
+
+      for (const startId of wayIds) {
+        for (const reverseStart of [false, true]) {
+          const ring = tryFrom(startId, reverseStart);
+          if (ring) return ring;
+        }
+      }
+
+      return [];
+    }
+
+    function parseOsm(xmlText) {
+      const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+
+      const nodes = {};
+      doc.querySelectorAll("node").forEach((node) => {
+        nodes[node.getAttribute("id")] = [
+          parseFloat(node.getAttribute("lon")),
+          parseFloat(node.getAttribute("lat")),
+        ];
+      });
+
+      const ways = {};
+      doc.querySelectorAll("way").forEach((way) => {
+        const coords = [];
+        way.querySelectorAll("nd").forEach((nd) => {
+          const coord = nodes[nd.getAttribute("ref")];
+          if (coord) coords.push(coord);
+        });
+        ways[way.getAttribute("id")] = coords;
+      });
+
+      const lineFeatures = Object.entries(ways).map(([id, coords]) => ({
+        type: "Feature",
+        properties: { id },
+        geometry: { type: "LineString", coordinates: coords },
+      }));
+
+      const relation = doc.querySelector("relation");
+      let polygonRing = [];
+      let boundaryName = "Ranh giới";
+
+      if (relation) {
+        const nameTag = relation.querySelector("tag[k='name']");
+        if (nameTag) boundaryName = nameTag.getAttribute("v");
+
+        const outerWayIds = [
+          ...relation.querySelectorAll("member[type='way'][role='outer']"),
+        ].map((member) => member.getAttribute("ref"));
+
+        polygonRing = stitchWays(outerWayIds, ways);
+      }
+
+      const polygonFeatures =
+        polygonRing.length >= 3
+          ? [
+              {
+                type: "Feature",
+                properties: { name: boundaryName },
+                geometry: {
+                  type: "Polygon",
+                  coordinates: [polygonRing],
+                },
+              },
+            ]
+          : [];
+
+      return {
+        name: boundaryName,
+        lines: { type: "FeatureCollection", features: lineFeatures },
+        polygon: { type: "FeatureCollection", features: polygonFeatures },
+        bounds: getBounds([...lineFeatures, ...polygonFeatures]),
+      };
+    }
+
+    function getBounds(features) {
+      let minLon = Infinity;
+      let minLat = Infinity;
+      let maxLon = -Infinity;
+      let maxLat = -Infinity;
+
+      features.forEach((feature) => {
+        const coords =
+          feature.geometry.type === "Polygon"
+            ? feature.geometry.coordinates[0]
+            : feature.geometry.coordinates;
+
+        coords.forEach(([lon, lat]) => {
+          minLon = Math.min(minLon, lon);
+          minLat = Math.min(minLat, lat);
+          maxLon = Math.max(maxLon, lon);
+          maxLat = Math.max(maxLat, lat);
+        });
+      });
+
+      return [
+        [minLon, minLat],
+        [maxLon, maxLat],
+      ];
+    }
+
+    map.on("load", () => {
+      fetch("ranh_PVietHung.osm")
+        .then((res) => res.text())
+        .then((xml) => {
+          const { name, lines, polygon, bounds } = parseOsm(xml);
+          lastBounds = bounds;
+
+          document.getElementById("ovTitle").textContent = name;
+
+          map.addSource("osm-boundary-fill", {
+            type: "geojson",
+            data: polygon,
+          });
+
+          map.addSource("osm-boundary-line", {
+            type: "geojson",
+            data: lines,
+          });
+
+          map.addLayer({
+            id: "osm-boundary-fill",
+            type: "fill",
+            source: "osm-boundary-fill",
+            paint: {
+              "fill-color": "#1565c0",
+              "fill-opacity": 0.18,
+            },
+          });
+
+          map.addLayer({
+            id: "osm-boundary-line",
+            type: "line",
+            source: "osm-boundary-line",
+            paint: {
+              "line-color": "#c62828",
+              "line-width": 3,
+            },
+          });
+
+          map.fitBounds(bounds, { padding: 40 });
+        })
+        .catch((err) => {
+          console.error("Không tải được file OSM:", err);
+          document.getElementById("ovTitle").textContent = "Không tải được dữ liệu";
+          document.getElementById("ovSub").textContent = "Kiểm tra file ranh_PVietHung.osm";
+        });
+    });
+
+    document.getElementById("btnFit").addEventListener("click", (e) => {
+      e.preventDefault();
+      if (lastBounds) map.fitBounds(lastBounds, { padding: 40 });
+    });
+  </script>
+</body>
+</html>
